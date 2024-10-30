@@ -8,7 +8,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from liballocate.clibs.clib import Clib
-from liballocate.allocators.ptmalloc2_allocator import Ptmalloc2Allocator
+from liballocate.allocators.ptmalloc2.ptmalloc2_allocator import Ptmalloc2Allocator
 
 if TYPE_CHECKING:
     from liballocate.utils.version_str import VersionStr

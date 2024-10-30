@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING
 
 from liballocate.allocators.allocator import Allocator
 from liballocate.data.memory_area import MemoryArea
+from liballocate.allocators.ptmalloc2.tcache import Tcache
 from libdebug.data.memory_map import MemoryMap
 
 if TYPE_CHECKING:
@@ -39,17 +40,5 @@ class Ptmalloc2Allocator(Allocator):
 
         self.heap_vmap = heap_page
 
-    @property
-    def tcache(self: Ptmalloc2Allocator) -> MemoryMap:
-        """Returns the tcache memory map."""
-        return self.libc.data
-    
-    @property
-    def main_arena(self: Ptmalloc2Allocator) -> MemoryMap:
-        """Returns the main arena memory map."""
-        return self.libc.text
-    
-    @property
-    def fastbins(self: Ptmalloc2Allocator) -> MemoryMap:
-        """Returns the fastbins memory map."""
-        return self.libc.data
+        if self.libc.version >= "2.26":
+            self.tcache = Tcache(self)

@@ -26,3 +26,4 @@ class Allocator:
         """
         # Add the heap attribute to the debugger.
         debugger.__setattr__("heap", self)
+        self._debugger = debugger

@@ -5,12 +5,15 @@
 
 from liballocate.clibs.glibc import Glibc
 
+
 def identify_clib(file_path: str):
     with open(file_path, "rb") as file:
         content = file.read()
 
     # Check if it is the GNU C Library
-    glibc_ver_index = content.find(b"GNU C Library (GNU libc) stable release version") + 45
+    glibc_ver_index = (
+        content.find(b"GNU C Library (GNU libc) stable release version") + 45
+    )
 
     # Pattern: GNU C Library (GNU libc) stable release version X.XX
     if glibc_ver_index != -1:
@@ -20,4 +23,6 @@ def identify_clib(file_path: str):
 
         return Glibc(version_str, file_path)
     else:
-        raise NotImplementedError("The C library is not among available implementations :( .")
+        raise NotImplementedError(
+            "The C library is not among available implementations :( ."
+        )

@@ -10,7 +10,6 @@ from typing import TYPE_CHECKING
 from liballocate.allocators.allocator import Allocator
 from liballocate.data.memory_area import MemoryArea
 from liballocate.allocators.ptmalloc2.tcache import Tcache
-from libdebug.data.memory_map import MemoryMap
 
 if TYPE_CHECKING:
     from liballocate.clibs.clib import Clib

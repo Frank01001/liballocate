@@ -12,5 +12,5 @@ setup(
     author="Frank01001",
     description="A libdebug extension for the dynamic allocator",
     packages=find_packages(include=["liballocate", "liballocate.*"]),
-    install_requires=["libdebug", "pwntools", "libdestruct"],
+    install_requires=["libdebug", "libdestruct"],
 )

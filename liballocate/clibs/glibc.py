@@ -7,11 +7,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from liballocate.clibs.clib import Clib
 from liballocate.allocators.ptmalloc2.ptmalloc2_allocator import Ptmalloc2Allocator
+from liballocate.clibs.clib import Clib
 
 if TYPE_CHECKING:
     from liballocate.utils.version_str import VersionStr
+
 
 class Glibc(Clib):
     """Represents the GNU C Library."""
@@ -23,7 +24,7 @@ class Glibc(Clib):
     def allocator_type(self: Glibc) -> str:
         """Returns the allocator type name for the GNU C Library."""
         return "ptmalloc2"
-    
+
     @property
     def allocator_class(self: Glibc) -> type:
         """Returns the allocator class for the GNU C Library."""

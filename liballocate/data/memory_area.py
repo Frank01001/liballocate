@@ -21,7 +21,7 @@ class MemoryArea:
         r_pages = []
 
         # Check if all pages are contiguous
-        pages.sort(lambda x: x.start)
+        pages.sort(key=lambda x: x.start)
 
         for i in range(1, len(pages)):
             if pages[i-1].end != pages[i].start:

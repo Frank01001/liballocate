@@ -3,12 +3,8 @@
 # Licensed under the MIT license. See LICENSE file in the project root for details.
 #
 
-from typing import TYPE_CHECKING
-
+from liballocate.clibs.clib import Clib
 from liballocate.clibs.glibc import Glibc
-
-if TYPE_CHECKING:
-    from liballocate.clibs.clib import Clib
 
 
 def identify_clib(file_path: str) -> Clib:

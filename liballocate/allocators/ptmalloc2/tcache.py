@@ -22,9 +22,10 @@ class Tcache:
             libc (Glibc): The GNU C Library to use with the tcache.
         """
 
+        
         if allocator.libc.version >= "2.31":
             pass
         
         self.do_ptr_mangling = allocator.libc.version >= "2.32"
 
-        struct_inflater = inflater(allocator._debugger.memory)
+        # struct_inflater = inflater(allocator._debugger.memory)

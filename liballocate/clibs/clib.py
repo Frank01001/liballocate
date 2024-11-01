@@ -21,19 +21,22 @@ class Clib:
         self.version = version
         self.file_path = file_path
 
-        # Read file content
-        with open(file_path, "rb") as f:
-            file_content = f.read()
+        clib_file = open(file_path, "rb")
+        clib_contents = clib_file.read()
 
-        clib_elf = ELFFile(file_content)
+        clib_elf = ELFFile(clib_file)
 
         # Compute hashes
-        self.md5 = hashlib.md5(file_content).hexdigest()
-        self.sha1 = hashlib.sha1(file_content).hexdigest()
-        self.sha256 = hashlib.sha256(file_content).hexdigest()
-        self.sha512 = hashlib.sha512(file_content).hexdigest()
+        self.md5 = hashlib.md5(clib_contents).hexdigest()
+        self.sha1 = hashlib.sha1(clib_contents).hexdigest()
+        self.sha256 = hashlib.sha256(clib_contents).hexdigest()
+        self.sha512 = hashlib.sha512(clib_contents).hexdigest()
         self.build_id = clib_elf.get_section_by_name(".note.gnu.build-id").data()[16:]
-
+        
+        # Hexlify the build_id
+        self.build_id = "".join("{:02x}".format(byte) for byte in self.build_id)
+        
+        print("DEBUG: ", self.build_id)
         # Retrieve debug information
         self.debuginfod_path = _debuginfod(self.build_id)
 

@@ -32,10 +32,10 @@ class Clib:
         self.sha256 = hashlib.sha256(clib_contents).hexdigest()
         self.sha512 = hashlib.sha512(clib_contents).hexdigest()
         self.build_id = clib_elf.get_section_by_name(".note.gnu.build-id").data()[16:]
-        
+
         # Hexlify the build_id
         self.build_id = "".join("{:02x}".format(byte) for byte in self.build_id)
-        
+
         # Retrieve debug information
         self.debuginfod_path = _debuginfod(self.build_id)
 
@@ -50,10 +50,10 @@ class Clib:
     @property
     def version_str(self: Clib) -> str:
         raise NotImplementedError()
-    
+
     @property
     def common_name(self: Clib) -> str:
         raise NotImplementedError()
-    
+
     def __repr__(self: Clib) -> str:
         return f"{self.version_str} | Allocator: {self.allocator_type}"

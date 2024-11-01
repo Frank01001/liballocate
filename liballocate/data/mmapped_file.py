@@ -5,13 +5,15 @@
 
 from __future__ import annotations
 
+from elftools.elf.elffile import ELFFile
 from libdebug.debugger.debugger import Debugger
+
 from liballocate.data.constrained_memory_view import ConstrainedMemoryView
 
-from elftools.elf.elffile import ELFFile
 
 class MmappedFile(ConstrainedMemoryView):
     """Represents a memory-mapped file."""
+
     def __init__(self: MmappedFile, debugger: Debugger, file_path: str) -> None:
         """Initializes the memory-mapped file with the given debugger and file
 
@@ -33,8 +35,6 @@ class MmappedFile(ConstrainedMemoryView):
 
         # For all ELF sections, expose an accessor with the same name
         for section in self.elf.iter_sections():
-            print(f"DEBUG: {section.name}")
-
             # Skip empty sections
             if section.name == "":
                 continue

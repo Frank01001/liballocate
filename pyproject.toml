@@ -10,12 +10,14 @@ license = { text = "MIT" }
 readme = "README.md"
 keywords = ["libdebug", "allocator", "dynamic", "extension"]
 
+# Define the dependencies directly under [project], not [project.urls]
+dependencies = [
+    "libdebug",
+    "libdestruct"
+]
+
 [project.urls]
 homepage = "https://github.com/libdebug/libdebug"
-
-[project.dependencies]
-libdebug = "*"
-libdestruct = "*"
 
 [tool.setuptools.packages.find]
 include = ["liballocate", "liballocate.*"]

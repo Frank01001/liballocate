@@ -4,11 +4,11 @@
 #
 
 from libdebug.debugger.debugger import Debugger
-from liballocate.clibs.clib_identifier import identify_clib
-from liballocate.utils.resolve_clib_utilities import resolve_clib_from_binary
-
 from libdebug.liblog import liblog
+
+from liballocate.clibs.clib_identifier import identify_clib
 from liballocate.liblog.liblog_decoration import decorate_liblog
+from liballocate.utils.resolve_clib_utilities import resolve_clib_from_binary
 
 
 def activate(debugger: Debugger, clib_name: str = None) -> None:
@@ -26,7 +26,9 @@ def activate(debugger: Debugger, clib_name: str = None) -> None:
 
     clib_name, clib_pathname = resolve_clib_from_binary(path_to_binary, clib_name)
 
-    liblog.liballocate(f"Identified C library: {clib_name} at {clib_pathname}")
+    clib = identify_clib(clib_name, clib_pathname)
+
+    liblog.liballocate(f"Identified C library: {clib_name} at {clib_pathname}\n\n{clib}")
 
     # Check if the debugger is already using liballocate
     if not hasattr(debugger, "active_extensions"):

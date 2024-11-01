@@ -1,0 +1,21 @@
+[project]
+name = "liballocate"
+version = "0.1.0"
+description = "A libdebug extension for the dynamic allocator"
+authors = [
+    { name = "Frank01001" },
+    { name = "MrIndeciso" }
+]
+license = { text = "MIT" }
+readme = "README.md"
+keywords = ["libdebug", "allocator", "dynamic", "extension"]
+
+[project.urls]
+homepage = "https://github.com/libdebug/libdebug"
+
+[project.dependencies]
+libdebug = "*"
+libdestruct = "*"
+
+[tool.setuptools.packages.find]
+include = ["liballocate", "liballocate.*"]

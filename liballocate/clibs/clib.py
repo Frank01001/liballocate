@@ -8,8 +8,6 @@ from __future__ import annotations
 import hashlib
 
 from libdebug.utils.elf_utils import _debuginfod
-
-from liballocate.utils.elf_info import get_build_id
 from liballocate.utils.version_str import VersionStr
 
 
@@ -59,7 +57,7 @@ class Clib:
                 )
 
         # Resolve Build ID
-        self.build_id = get_build_id(file_content)
+        # self.build_id = get_build_id(file_content)
 
         # Compute hashes
         self.md5 = hashlib.md5(file_content).hexdigest()

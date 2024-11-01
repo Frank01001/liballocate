@@ -34,3 +34,8 @@ class Glibc(Clib):
     def version_str(self: Glibc) -> str:
         """Returns the version string for the GNU C Library."""
         return f"glibc-{self.version}"
+    
+    @property
+    def common_name(self: Glibc) -> str:
+        """Returns the common name for the GNU C Library."""
+        return "libc"

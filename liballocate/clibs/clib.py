@@ -36,7 +36,6 @@ class Clib:
         # Hexlify the build_id
         self.build_id = "".join("{:02x}".format(byte) for byte in self.build_id)
         
-        print("DEBUG: ", self.build_id)
         # Retrieve debug information
         self.debuginfod_path = _debuginfod(self.build_id)
 
@@ -52,5 +51,9 @@ class Clib:
     def version_str(self: Clib) -> str:
         raise NotImplementedError()
     
+    @property
+    def common_name(self: Clib) -> str:
+        raise NotImplementedError()
+    
     def __repr__(self: Clib) -> str:
-        return f"{self.name} {self.version} | Allocator: {self.allocator_type}"
+        return f"{self.version_str} | Allocator: {self.allocator_type}"

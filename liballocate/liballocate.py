@@ -9,6 +9,7 @@ from libdebug.liblog import liblog
 from liballocate.clibs.clib_identifier import identify_clib
 from liballocate.liblog.liblog_decoration import decorate_liblog
 from liballocate.utils.resolve_clib_utilities import resolve_clib_from_binary
+from liballocate.data.mmapped_file import MmappedFile
 
 
 def activate(debugger: Debugger, clib_name: str = None) -> None:
@@ -28,11 +29,18 @@ def activate(debugger: Debugger, clib_name: str = None) -> None:
     path_to_binary = debugger._internal_debugger._process_full_path
 
     clib_name, clib_pathname = resolve_clib_from_binary(path_to_binary, clib_name)
-
     clib = identify_clib(clib_pathname)
 
-    liblog.liballocate(f"Identified C library: {clib_name} at {clib_pathname}\n\n{clib}")
+    liblog.liballocate(f"Identified C library: {clib_name} at {clib_pathname} | {clib}")
 
+    # Add section accessors for the clib and binary
+    binary_file = MmappedFile(debugger, path_to_binary)    
+    libc_file = MmappedFile(debugger, clib_pathname)
+
+    setattr(debugger, "binary", binary_file)
+    setattr(debugger, clib.common_name, libc_file)
+
+    # Instantiate the allocator class
     AllocatorClass = clib.allocator_class
 
     # Instantiate the allocator

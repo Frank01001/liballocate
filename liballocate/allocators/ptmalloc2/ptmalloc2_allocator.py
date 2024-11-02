@@ -21,7 +21,7 @@ if TYPE_CHECKING:
 
 def _ptmalloc_init_callback(thread: ThreadContext, bp: Breakpoint) -> None:
     """Callback for the malloc breakpoint."""
-    # Reach map allocation
+    # Reach the point where the heap is initialized
     thread.finish()
 
     allocator = thread.debugger.heap
@@ -59,6 +59,8 @@ class Ptmalloc2Allocator(Allocator):
                 file=self.clib.file_path,
             )
         else:
+            # We can already initialize the allocator
+            _ptmalloc_init_callback(debugger.threads[0], None)
             self._is_initialized = True
     
     @property

@@ -13,11 +13,12 @@ from liballocate.allocators.allocator import Allocator
 from liballocate.allocators.ptmalloc2.tcache import Tcache
 
 if TYPE_CHECKING:
+    from libdebug.data.breakpoint import Breakpoint
     from libdebug.debugger.debugger import Debugger
     from libdebug.state.thread_context import ThreadContext
-    from libdebug.data.breakpoint import Breakpoint
 
     from liballocate.clibs.clib import Clib
+
 
 def _ptmalloc_init_callback(thread: ThreadContext, bp: Breakpoint) -> None:
     """Callback for the malloc breakpoint."""
@@ -30,6 +31,7 @@ def _ptmalloc_init_callback(thread: ThreadContext, bp: Breakpoint) -> None:
     allocator._is_initialized = True
 
     bp.disable()
+
 
 class Ptmalloc2Allocator(Allocator):
     """Represents the ptmalloc2 allocator."""
@@ -50,7 +52,9 @@ class Ptmalloc2Allocator(Allocator):
         heap_page = debugger.maps.filter("[heap]")
 
         if not heap_page:
-            liblog.liballocate("Heap is not initialized yet. Waiting for the first allocation.")
+            liblog.liballocate(
+                "Heap is not initialized yet. Waiting for the first allocation."
+            )
             self._is_initialized = False
 
             self._debugger.breakpoint(
@@ -62,16 +66,16 @@ class Ptmalloc2Allocator(Allocator):
             # We can already initialize the allocator
             _ptmalloc_init_callback(debugger.threads[0], None)
             self._is_initialized = True
-    
+
     @property
     def is_initialized(self: Ptmalloc2Allocator) -> bool:
         """Returns True if the allocator is initialized, False otherwise."""
         return self._is_initialized
-    
+
     def _setup_accessors(self: Ptmalloc2Allocator) -> None:
         """Sets up the accessors for the allocator."""
         heap_page = self._debugger.maps.filter("[heap]")[0]
-        
+
         self.heap_vmap = heap_page
 
         if self.libc.version >= "2.26":

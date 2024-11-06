@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING
 from libdebug.liblog import liblog
 
 from liballocate.allocators.allocator import Allocator
+from liballocate.allocators.ptmalloc2.chunk_accessor import Ptmalloc2ChunkAccessor
 from liballocate.allocators.ptmalloc2.tcache import Tcache
 
 if TYPE_CHECKING:
@@ -39,6 +40,9 @@ class Ptmalloc2Allocator(Allocator):
     def __init__(self: Ptmalloc2Allocator, libc: Clib) -> None:
         """Initializes the ptmalloc2 allocator."""
         super().__init__(libc)
+
+        # Accessor to retrieve chunks
+        self.chunk = Ptmalloc2ChunkAccessor(self._debugger)
 
     def decorate_debugger(self: Ptmalloc2Allocator, debugger: Debugger) -> None:
         """Decorates the given debugger with the ptmalloc2 interface.

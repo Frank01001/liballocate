@@ -14,24 +14,9 @@ from liballocate.allocators.ptmalloc2.chunk_accessor import Ptmalloc2ChunkAccess
 from liballocate.allocators.ptmalloc2.tcache import Tcache
 
 if TYPE_CHECKING:
-    from libdebug.data.breakpoint import Breakpoint
     from libdebug.debugger.debugger import Debugger
-    from libdebug.state.thread_context import ThreadContext
 
     from liballocate.clibs.clib import Clib
-
-
-def _ptmalloc_init_callback(thread: ThreadContext, bp: Breakpoint) -> None:
-    """Callback for the malloc breakpoint."""
-    # Reach the point where the heap is initialized
-    thread.finish()
-
-    allocator = thread.debugger.heap
-
-    allocator._setup_accessors()
-    allocator._is_initialized = True
-
-    bp.disable()
 
 
 class Ptmalloc2Allocator(Allocator):
@@ -41,9 +26,6 @@ class Ptmalloc2Allocator(Allocator):
         """Initializes the ptmalloc2 allocator."""
         super().__init__(libc)
 
-        # Accessor to retrieve chunks
-        self.chunk = Ptmalloc2ChunkAccessor(self._debugger)
-
     def decorate_debugger(self: Ptmalloc2Allocator, debugger: Debugger) -> None:
         """Decorates the given debugger with the ptmalloc2 interface.
 
@@ -52,35 +34,59 @@ class Ptmalloc2Allocator(Allocator):
         """
         super().decorate_debugger(debugger)
 
-        # Add heap memory area
-        heap_page = debugger.maps.filter("[heap]")
+        self._is_initialized = False
 
-        if not heap_page:
-            liblog.liballocate(
-                "Heap is not initialized yet. Waiting for the first allocation."
-            )
-            self._is_initialized = False
-
-            self._debugger.breakpoint(
-                "ptmalloc_init.part.0",
-                callback=_ptmalloc_init_callback,
-                file=self.clib.file_path,
-            )
-        else:
+        if self._is_heap_initialized_in_libc():
             # We can already initialize the allocator
-            _ptmalloc_init_callback(debugger.threads[0], None)
+            self._setup_accessors()
             self._is_initialized = True
 
     @property
     def is_initialized(self: Ptmalloc2Allocator) -> bool:
         """Returns True if the allocator is initialized, False otherwise."""
-        return self._is_initialized
+        # Lazy check
+        if not self._is_initialized:
+            if not self._is_heap_initialized_in_libc():
+                return False
+            else:
+                self._setup_accessors()
+                self._is_initialized = True
+
+        return True
 
     def _setup_accessors(self: Ptmalloc2Allocator) -> None:
         """Sets up the accessors for the allocator."""
-        heap_page = self._debugger.maps.filter("[heap]")[0]
+        heap_page = self._debugger.maps.filter("heap")[0]
 
+        # TODO: This could be an old instance of the [heap] page, if brk() was called then the mapping will be different
+        # Should we perform filter at each access?
         self.heap_vmap = heap_page
 
-        if self.libc.version >= "2.26":
+        # Accessor to retrieve chunks
+        self.chunk_at = Ptmalloc2ChunkAccessor(self._debugger)
+
+        if self.clib.version >= "2.26":
             self.tcache = Tcache(self)
+
+    # TODO: This looks a bit like spaghetti code, we should refactor this eventually
+    # Trying to get any attribute of the object will trigger the initialization
+    # or an error if the heap is not initialized
+    def __getattr__(self, name):
+        # Get the value of the attribute without recursion
+        is_initialized = self.__getattribute__("is_initialized")
+
+        # Allowed before initialization of the heap
+        allowed_attributes = ["clib"]
+        
+        if not is_initialized and name not in allowed_attributes:
+            liblog.liballocate(
+                "The ptmalloc2 allocator is not initialized. "
+                "Please ensure that the target process is running and the allocator is in use."
+            )
+            return None
+
+        return super().__getattr__(name)
+    
+    def _is_heap_initialized_in_libc(self: Ptmalloc2Allocator) -> bool:
+        """Returns whether the heap is initialized or not."""
+        return len(self._debugger.maps.filter("[heap]")) > 0

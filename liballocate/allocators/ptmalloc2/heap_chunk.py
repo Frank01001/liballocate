@@ -31,9 +31,9 @@ class Ptmalloc2Chunk:
         size_plus_flags = int.from_bytes(chunk_metadata[8:16], byteorder="little")
 
         self._size = size_plus_flags & 0xfffffffffffffff8
-        self._is_allocated_arena = size_plus_flags & 0x2 == 0x2
-        self._is_mmapped = size_plus_flags & 0x2 == 0x2
-        self._is_prev_inuse = size_plus_flags & 0x1 == 0x1
+        self._is_allocated_arena = size_plus_flags & 0b100 != 0
+        self._is_mmapped = size_plus_flags & 0b010 != 0
+        self._is_prev_inuse = size_plus_flags & 0b001 != 0
 
         # Extract chunk content
         self._content = self._debugger.memory[address, self._size - 0x10, "absolute"]
@@ -124,9 +124,9 @@ class Ptmalloc2Chunk:
         """Helper method to recompute size with flags."""
         size_plus_flags = self._size
         if self._is_allocated_arena:
-            size_plus_flags |= 0x2
+            size_plus_flags |= 0b100
         if self._is_mmapped:
-            size_plus_flags |= 0x2
+            size_plus_flags |= 0b010
         if self._is_prev_inuse:
-            size_plus_flags |= 0x1
+            size_plus_flags |= 0b001
         return size_plus_flags

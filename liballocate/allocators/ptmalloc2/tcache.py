@@ -39,12 +39,13 @@ class Tcache:
         perthread_definition = None
         entry_definition = None
 
+        #TODO: Implement DWARF parsing of the struct definitions or decide a better way to get them
         # Check if the struct is cached, otherwise find struct definition
         if not c_struct_provider.has_cached_struct(tcache_pt_struct_name):
             # Get struct definitions from debuginfod
             dbg_elf = ELFFile(open(allocator.clib.debuginfod_path, "rb"))
-            perthread_struct = dbg_elf.get_section_by_name("tcache_perthread_struct")
-            entry_struct = dbg_elf.get_section_by_name("tcache_entry")
+            perthread_struct = ...
+            entry_struct = ...
 
             perthread_definition = perthread_struct.data()
             entry_definition = entry_struct.data()
@@ -75,6 +76,8 @@ class Tcache:
         """Returns whether the tcache has a key or not."""
         return self._allocator_ref._libc.version >= "2.29"
 
+    # TODO: There could be security backports that implement this feature
+    # Find a better way to check for this feature in the future
     @property
     def has_protect_ptr(self) -> bool:
         """Returns whether the tcache has pointer mangling or not."""
@@ -123,19 +126,20 @@ class Tcache:
         Returns:
             TcacheEntry: The head tcache entry at the given size.
         """
+        if size < 0x10:
+            raise ValueError(f"Invalid size: {hex(size)} is smaller than 0x10")
+
         # Get the tcache index for the given size
         tcache_index = self._csize2tidx(size)
 
-        # Check if the tcache index is valid and not empty
-        if self._perthread_struct.counts[tcache_index].value <= 0:
-            return None
-
         # Get the address of the head tcache entry
         curr_address = self._perthread_struct.entries[tcache_index].value
+        num_entries = self._perthread_struct.counts[tcache_index]
         curr_entry = None
+        counter = 0
 
         # Unwind the tcache linked list
-        while curr_address is not None:
+        while curr_address is not None and counter < num_entries:
             # Handle struct from memory
             entry_struct = self._struct_inflater.inflate(
                 self._tcache_entry_t,
@@ -143,18 +147,26 @@ class Tcache:
             )
 
             # Get the next tcache entry address
-            if entry_struct.next.value == 0:
-                next_address = None
-            elif self.has_protect_ptr:
-                next_address = self.protect_ptr(
+            if self.has_protect_ptr:
+                plain_next_address = self.reveal_ptr(
                     entry_struct.next.address,
                     entry_struct.next.value,
                 )
             else:
-                next_address = entry_struct.next.value
+                plain_next_address = entry_struct.next.value
+
+            # Check if the next tcache entry is valid
+            is_next_valid = True
+
+            try:
+                self._allocator_ref._debugger.memory.read(plain_next_address, 1)
+            except:
+                is_next_valid = False
 
             # Get the key if present
             key = None if not self.has_tcache_key else entry_struct.key.value
+
+            next_address = plain_next_address if is_next_valid else None
 
             # Create the tcache entry
             entry = TcacheEntry(curr_address, next_address, key)
@@ -167,6 +179,9 @@ class Tcache:
             curr_entry = entry
             curr_address = next_address
 
+            # Increment the counter
+            counter += 1
+
     def __setitem__(self: Tcache, size: int, value: int) -> None:
         """Sets the head tcache entry of the given size. If the tcache entry has count to 0 or invalid, it will be set to 1.
 
@@ -177,8 +192,54 @@ class Tcache:
         # Get the tcache index for the given size
         tcache_index = self._csize2tidx(size)
 
-        if self._perthread_struct.counts[tcache_index].value <= 0:
-            self._perthread_struct.counts[tcache_index].value = 1
+        # Unwind the tcache linked list to count the number of entries
+        count = 0
 
+        curr_address = value
+
+        # Unwind the tcache linked list
+        while curr_address is not None:
+            # Handle struct from memory
+            entry_struct = self._struct_inflater.inflate(
+                self._tcache_entry_t,
+                curr_address,
+            )
+
+            # Get the next tcache entry address
+            if self.has_protect_ptr:
+                plain_next_address = self.reveal_ptr(
+                    entry_struct.next.address,
+                    entry_struct.next.value,
+                )
+            else:
+                plain_next_address = entry_struct.next.value
+
+            # Check if the next tcache entry is valid
+            is_next_valid = True
+
+            try:
+                self._allocator_ref._debugger.memory.read(plain_next_address, 1)
+            except:
+                is_next_valid = False
+
+            next_address = plain_next_address if is_next_valid else None
+
+            # Update the current address
+            curr_address = next_address
+
+            # Increment the count
+            count += 1
+
+        # Set the head tcache entry count
+        self._perthread_struct.counts[tcache_index] = count if count > 0 else 1
+
+        if self.has_protect_ptr:
+            pos = self._perthread_struct.entries[tcache_index].address
+
+            # Encode the pointer
+            encoded_ptr = self.protect_ptr(pos, value)
+        else:
+            encoded_ptr = value
+        
         # Set the head tcache entry address
-        self._perthread_struct.entries[tcache_index].value = value
+        self._perthread_struct.entries[tcache_index].value = encoded_ptr

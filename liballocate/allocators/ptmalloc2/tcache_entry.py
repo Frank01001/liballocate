@@ -18,6 +18,12 @@ class TcacheEntry:
     next: TcacheEntry | None
     """The next tcache entry."""
 
+    next_value: int
+    """The next tcache entry address. Contains the value at the position of the next pointer regardless of validity (processed with reveal_ptr if necessary)."""
+
+    raw_next: int
+    """The raw next tcache entry address. Contains the value at the position of the next pointer regardless of validity (unprocessed)."""
+
     _key: int | None = None
     """The key of the tcache entry."""
 

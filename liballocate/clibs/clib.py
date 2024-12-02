@@ -32,6 +32,9 @@ class Clib:
         self.sha256 = hashlib.sha256(clib_contents).hexdigest()
         self.sha512 = hashlib.sha512(clib_contents).hexdigest()
         self.build_id = clib_elf.get_section_by_name(".note.gnu.build-id").data()[16:]
+        
+        self.elfclass = clib_elf.elfclass
+        self.endianness = "little" if clib_elf.little_endian else "big"
 
         # Hexlify the build_id
         self.build_id = "".join("{:02x}".format(byte) for byte in self.build_id)

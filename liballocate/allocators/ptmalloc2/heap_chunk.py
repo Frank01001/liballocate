@@ -38,6 +38,9 @@ class Ptmalloc2Chunk:
         # Extract chunk content
         self._content = self._debugger.memory[address, self._size - 0x10, "absolute"]
 
+        self._word_size = debugger.heap.clib.elfclass // 8
+        self._endianness = debugger.heap.clib.endianness
+
     @property
     def address(self: Ptmalloc2Chunk) -> int:
         return self._address
@@ -105,16 +108,16 @@ class Ptmalloc2Chunk:
     def _update_size_in_memory(self):
         """Updates the chunk's size in memory."""
         size_plus_flags = self._compute_size_plus_flags()
-        self._debugger.memory[self._address - 0x8, 0x8, "absolute"] = size_plus_flags.to_bytes(8, "little")
+        self._debugger.memory[self._address - 0x8, self._word_size, "absolute"] = size_plus_flags.to_bytes(self._word_size, self._endianness)
 
     def _update_prev_size_in_memory(self):
         """Updates the previous chunk size in memory."""
-        self._debugger.memory[self._address - 0x10, 0x8, "absolute"] = self._prev_size.to_bytes(8, "little")
+        self._debugger.memory[self._address - 0x10, self._word_size, "absolute"] = self._prev_size.to_bytes(self._word_size, self._endianness)
 
     def _update_flags_in_memory(self):
         """Updates the flags in memory."""
         size_plus_flags = self._compute_size_plus_flags()
-        self._debugger.memory[self._address - 0x8, 0x8, "absolute"] = size_plus_flags.to_bytes(8, "little")
+        self._debugger.memory[self._address - 0x8, self._word_size, "absolute"] = size_plus_flags.to_bytes(self._word_size, self._endianness)
 
     def _update_content_in_memory(self):
         """Updates the content of the chunk in memory."""
